@@ -141,3 +141,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# real calendar data - never commit
+dev/corpus/
+dev/local-*.json
