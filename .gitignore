@@ -144,4 +144,7 @@ vite.config.ts.timestamp-*
 
 # real calendar data - never commit
 dev/corpus/
-dev/local-*.json
+dev/local-*
+
+# System files
+.DS_Store
