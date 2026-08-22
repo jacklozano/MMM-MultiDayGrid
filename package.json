@@ -1,0 +1,21 @@
+{
+  "name": "mmm-multidaygrid",
+  "version": "0.1.0",
+  "description": "Google-Calendar-style multi-day time grid for MagicMirror². Fetches its own ICS feeds and derives its layout from the space it's given.",
+  "keywords": ["MagicMirror", "magicmirror-module", "calendar", "ical", "grid"],
+  "homepage": "https://github.com/jacklozano/MMM-MultiDayGrid",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacklozano/MMM-MultiDayGrid.git"
+  },
+  "license": "MIT",
+  "author": "Jack Lozano",
+  "main": "MMM-MultiDayGrid.js",
+  "engines": {
+    "node": ">=22.21.1 <23 || >=24"
+  },
+  "dependencies": {
+    "node-ical": "^0.26.1",
+    "moment-timezone": "^0.6.2"
+  }
+}
