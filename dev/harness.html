@@ -1,0 +1,114 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>MMM-MultiDayGrid - dev harness</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#111; color:#ddd; font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+         margin:0; padding:24px 28px; }
+  h1 { font-size:16px; letter-spacing:.08em; text-transform:uppercase; color:#888;
+       font-weight:400; margin:0 0 20px; }
+  h2 { font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:#7a7a7a;
+       font-weight:400; margin:26px 0 8px; border-bottom:1px solid #262626; padding-bottom:6px; }
+  table { border-collapse:collapse; width:100%; max-width:900px; }
+  td { padding:3px 12px 3px 0; vertical-align:top; }
+  td:first-child { width:26px; }
+  .pass { color:#6bcb90; } .fail { color:#ff6b6b; }
+  .name { color:#ccc; } .detail { color:#777; }
+  .summary { margin-top:22px; padding:10px 14px; border-radius:4px; display:inline-block; }
+  .summary.ok  { background:#12301e; color:#6bcb90; }
+  .summary.bad { background:#3a1414; color:#ff6b6b; }
+  .note { color:#666; max-width:900px; margin:6px 0 0; }
+</style>
+
+<h1>MMM-MultiDayGrid — dev harness</h1>
+<p class="note">
+  Pure-function tests. No MagicMirror runtime, no network, no node — open this file directly
+  (<code>file://</code>). Reference values come from <code>dev/local-baseline.json</code>,
+  measured on the live board 2026-08-22.
+</p>
+
+<div id="out"></div>
+
+<script src="../lib/derive.js"></script>
+<script>
+(function () {
+  var D = window.MMDGDerive;
+  var out = document.getElementById("out");
+  var pass = 0, fail = 0, table = null;
+
+  function section(title) {
+    var h = document.createElement("h2"); h.textContent = title; out.appendChild(h);
+    table = document.createElement("table"); out.appendChild(table);
+  }
+  function ok(name, got, want, tol) {
+    tol = tol || 0;
+    var good = (typeof want === "number") ? Math.abs(got - want) <= tol : got === want;
+    good ? pass++ : fail++;
+    var tr = table.insertRow();
+    tr.insertCell().innerHTML = '<span class="' + (good ? "pass" : "fail") + '">' +
+      (good ? "✓" : "✗") + "</span>";
+    tr.insertCell().innerHTML = '<span class="name">' + name + "</span>";
+    tr.insertCell().innerHTML = '<span class="detail">got ' + got +
+      (good ? "" : " &nbsp;want " + want) + "</span>";
+  }
+  function info(label, value) {
+    var tr = table.insertRow();
+    tr.insertCell().textContent = "";
+    tr.insertCell().innerHTML = '<span class="detail">' + label + "</span>";
+    tr.insertCell().innerHTML = '<span class="detail">' + value + "</span>";
+  }
+
+  /* ---- the Step 1 gate ------------------------------------------------ */
+  section("Reference board — 1196×800, days 3, hourLength 16");
+  var r = D({ width: 1196, height: 800, days: 3, hourLength: 16 });
+  ok("rowHeight = 25",        r.rowHeight,    25,  0);
+  ok("baseFontSize = 34",     r.baseFontSize, 34,  0.1);
+  ok("columnWidth ≈ 378",     r.columnWidth,  378, 1);
+  ok("indexWidth ≈ 62",       r.indexWidth,   62,  1);
+  info("bound by", r.boundBy + " &nbsp;·&nbsp; maxLanes " + r.maxLanes +
+       " &nbsp;·&nbsp; minTileWidth " + r.minTileWidth);
+
+  /* ---- hard limits ---------------------------------------------------- */
+  section("Minimum board size (minFontSize 14)");
+  for (var d = 1; d <= 4; d++) {
+    var mw = D.minWidthFor(d, 14);
+    var q  = D({ width: mw, height: 400, days: d });
+    ok("days " + d + " → " + mw + "×" + q.minHeight + " holds the font floor",
+       q.baseFontSize, 14, 0.2);
+  }
+
+  /* ---- responsiveness ------------------------------------------------- */
+  section("Responsive across sizes — font must never fall below the floor");
+  [[1196,800,3],[1196,800,4],[900,600,3],[660,400,4],[2000,1000,2],[493,394,3]]
+    .forEach(function (c) {
+      var x = D({ width: c[0], height: c[1], days: c[2] });
+      ok(c[0] + "×" + c[1] + " days " + c[2] +
+         " → font " + x.baseFontSize + ", col " + x.columnWidth +
+         ", lanes " + x.maxLanes, x.baseFontSize >= 14, true);
+    });
+
+  /* ---- clamps, flags, overrides --------------------------------------- */
+  section("Clamps, flags and escape hatches");
+  var c7 = D({ width: 1196, height: 800, days: 7 });
+  ok("days 7 clamps to 4",            c7.days, 4);
+  ok("  …and warns",                  c7.warnings.length > 0, true);
+  var un = D({ width: 200, height: 800, days: 4 });
+  ok("undersize is flagged",          un.undersize, true);
+  ok("  …and floors the font at 14",  un.baseFontSize, 14, 0.01);
+  var ov = D({ width: 1196, height: 800, days: 3, baseFontSize: 20 });
+  ok("baseFontSize override wins",    ov.baseFontSize, 20);
+  ok("  …and is recorded",            ov.boundBy, "override");
+  var fs = D({ width: 1196, height: 800, days: 3, fontScale: 1.5 });
+  ok("fontScale 1.5 → 51",            fs.baseFontSize, 51, 0.2);
+  var mi = D({ width: 1196, height: 800, days: 3,
+               measureIndexLabel: function () { return 48; } });
+  ok("measured indexWidth is used",   mi.indexWidth, 48);
+  ok("  …and widens the columns",     mi.columnWidth, (1196 - 48) / 3, 0.1);
+
+  var s = document.createElement("div");
+  s.className = "summary " + (fail ? "bad" : "ok");
+  s.textContent = fail ? ("FAILED " + fail + " of " + (pass + fail))
+                       : ("ALL " + pass + " ASSERTIONS PASS");
+  out.appendChild(s);
+})();
+</script>
