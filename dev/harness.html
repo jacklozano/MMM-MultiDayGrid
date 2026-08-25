@@ -32,6 +32,8 @@
 
 <div id="out"></div>
 <script src="fixture.js"></script>
+<!-- optional, gitignored: real events for the parity pass. Absent by default. -->
+<script src="local-events.js" onerror="window.REAL_EVENTS=null"></script>
 
 <link rel="stylesheet" href="../MMM-MultiDayGrid.css">
 <script src="../lib/derive.js"></script>
@@ -179,6 +181,22 @@ function run() {
     return !t.querySelector(".mmdg-time");
   });
   is("narrow tiles dropped their time line", narrow.length > 0, narrow.length + " without a time");
+
+  /* ---- parity: real events at the reference board ----------------------- */
+  if (window.REAL_EVENTS && window.REAL_EVENTS.length) {
+    var saved = FIXTURE;
+    FIXTURE = window.REAL_EVENTS;
+    var hR = document.createElement("h2");
+    hR.textContent = "Parity — REAL events, 1196x800, days 3 (compare with dev/local-shots/)";
+    stage.appendChild(hR);
+    var note = document.createElement("p");
+    note.className = "note";
+    note.textContent = "Live calendar data, loaded from the gitignored dev/local-events.js. "
+      + "This is the direct comparison for task 4.9.";
+    stage.appendChild(note);
+    renderInto(stage, 3, "1196px", "800px", "real data");
+    FIXTURE = saved;
+  }
 
   var h3 = document.createElement("h2");
   h3.textContent = "Responsive — same fixture at other sizes";
