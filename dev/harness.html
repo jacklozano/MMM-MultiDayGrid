@@ -18,6 +18,9 @@
   .summary.ok  { background:#12301e; color:#6bcb90; }
   .summary.bad { background:#3a1414; color:#ff6b6b; }
   .note { color:#666; max-width:900px; margin:6px 0 0; }
+  #stage { margin-top:26px; }
+  .cap { color:#7a7a7a; font-size:12px; margin:14px 0 6px; }
+  #stage .mmdg { font-family:"Helvetica Neue",Helvetica,sans-serif; margin-bottom:18px; }
 </style>
 
 <h1>MMM-MultiDayGrid — dev harness</h1>
@@ -28,10 +31,16 @@
 </p>
 
 <div id="out"></div>
+<script src="fixture.js"></script>
 
+<link rel="stylesheet" href="../MMM-MultiDayGrid.css">
 <script src="../lib/derive.js"></script>
+<script src="../lib/layout.js"></script>
+<script src="../lib/grid.js"></script>
 <script>
-(function () {
+document.addEventListener("DOMContentLoaded", run);
+function run() {
+  var FIXTURE = window.FIXTURE;
   var D = window.MMDGDerive;
   var out = document.getElementById("out");
   var pass = 0, fail = 0, table = null;
@@ -51,6 +60,7 @@
     tr.insertCell().innerHTML = '<span class="detail">got ' + got +
       (good ? "" : " &nbsp;want " + want) + "</span>";
   }
+  function is(name, cond, detail) { ok(name, !!cond, true); if (detail) info("", detail); }
   function info(label, value) {
     var tr = table.insertRow();
     tr.insertCell().textContent = "";
@@ -105,10 +115,82 @@
   ok("measured indexWidth is used",   mi.indexWidth, 48);
   ok("  …and widens the columns",     mi.columnWidth, (1196 - 48) / 3, 0.1);
 
+  /* ---- layout engine --------------------------------------------------- */
+  var LAY = window.MMDGLayout;
+  section("Layout engine");
+  var w = LAY.fairShare([54, 460], 378);
+  is("fair share holds the floor against a huge neighbour", w[0] >= 54, w[0].toFixed(1) + "px");
+  is("  …and still spends the whole column", Math.abs(w[0] + w[1] - 378) < 0.01);
+  var seq = [{start:0,end:5},{start:5,end:10}];
+  LAY.assignLanes(seq);
+  is("back-to-back events collapse to one lane", seq[0].lanes === 1);
+
+  /* ---- render ----------------------------------------------------------- */
+  var NOW = new Date(2026, 7, 24, 12, 30, 0);
+  var cfg = {
+    days: 3, dayIndex: 0, beginHour: 6, hourLength: 16,
+    width: "1196px", height: "800px",
+    eventTint: 0.58, inkColor: "#14161a", passedOpacity: 0.4,
+    todayStyle: "ring", neutralWeekends: true, maxChipRows: 4, todayTint: 0.06,
+    tilePadding: 12, now: NOW
+  };
+
+  function renderInto (host, days, width, height, label) {
+    var d = MMDGDerive({ width: parseInt(width), height: parseInt(height), days: days, hourLength: 16 });
+    var c = Object.assign({}, cfg, { days: days, width: width, height: height });
+    var ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = "500 " + (d.baseFontSize * 0.46 * 1.15).toFixed(2) + "px Helvetica Neue, sans-serif";
+    var lay = LAY.layout(FIXTURE, Object.assign({}, c, {
+      columnWidth: d.columnWidth, minTileWidth: d.minTileWidth
+    }), function (t) { return ctx.measureText(t).width; });
+    var cap = document.createElement("div");
+    cap.className = "cap";
+    cap.textContent = label + "  —  font " + d.baseFontSize + "  col " + d.columnWidth.toFixed(0) +
+      "  lanes<=" + d.maxLanes + "  tiles " + lay.tiles.length + "  chips " + lay.chips.length +
+      " in " + lay.chipRows + " row(s)";
+    host.appendChild(cap);
+    host.appendChild(MMDGGrid.buildGrid({ layout: lay, derived: d, config: c, feeds: [], problems: [] }));
+    return lay;
+  }
+
+  var stage = document.createElement("div");
+  stage.id = "stage";
+  out.appendChild(stage);
+  var h2 = document.createElement("h2");
+  h2.textContent = "Rendered — 1196x800, days 3 (the reference board)";
+  stage.appendChild(h2);
+  var main = renderInto(stage, 3, "1196px", "800px", "reference");
+
+  section("Render checks");
+  is("tiles rendered", document.querySelectorAll(".mmdg-tile").length === main.tiles.length,
+     document.querySelectorAll(".mmdg-tile").length + " in DOM");
+  is("chips rendered (none silently dropped)",
+     document.querySelectorAll(".mmdg-chip").length +
+     (document.querySelector(".mmdg-chip-more") ? parseInt(document.querySelector(".mmdg-chip-more").textContent.slice(1)) : 0)
+     === main.chips.length,
+     main.chips.length + " chips, " + main.chipRows + " rows");
+  is("multi-day chip spans >1 column", !!document.querySelector(".mmdg-chip[style*='--col-end: 4']") ||
+     main.chips.some(function(c){ return c.span > 1; }));
+  is("continuation marks present", !!document.querySelector(".continues-after, .continues-before"));
+  is("now-line drawn", !!document.querySelector(".mmdg-now"));
+  is("passed tiles dimmed", document.querySelectorAll(".mmdg-tile.is-passed").length > 0,
+     document.querySelectorAll(".mmdg-tile.is-passed").length + " dimmed");
+  var narrow = Array.prototype.slice.call(document.querySelectorAll(".mmdg-tile")).filter(function (t) {
+    return !t.querySelector(".mmdg-time");
+  });
+  is("narrow tiles dropped their time line", narrow.length > 0, narrow.length + " without a time");
+
+  var h3 = document.createElement("h2");
+  h3.textContent = "Responsive — same fixture at other sizes";
+  stage.appendChild(h3);
+  renderInto(stage, 4, "1196px", "800px", "days 4");
+  renderInto(stage, 2, "700px", "560px", "700x560, days 2");
+  renderInto(stage, 1, "360px", "420px", "360x420, days 1");
+
   var s = document.createElement("div");
   s.className = "summary " + (fail ? "bad" : "ok");
   s.textContent = fail ? ("FAILED " + fail + " of " + (pass + fail))
                        : ("ALL " + pass + " ASSERTIONS PASS");
   out.appendChild(s);
-})();
+}
 </script>

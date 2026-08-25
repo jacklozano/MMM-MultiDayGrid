@@ -80,6 +80,7 @@ Everything else has a default. `width` and `height` are the only geometry you no
 | `inkColor` | string | `"#14161a"` | Text colour inside event blocks. |
 | `showHalfHourLines` | boolean | `false` | Half-hour rules. Off by default — the single biggest decluttering win on a glanceable display. |
 | `todayStyle` | `"ring"` \| `"fill"` \| `"none"` | `"ring"` | How today's date header is marked. A ring adds no extra colour to the screen. |
+| `todayTint` | number | `0.06` | How far today's column is lifted from the background, 0–1. Rendered as white over black, so `0.06` is `#0f0f0f` — a dark grey, not a hue, so it marks "here" without competing with the calendar colours. The tint runs unbroken through the day header, chip bar and grid. `0.03` is near-invisible; `0.12` (`#1f1f1f`) is assertive. |
 | `neutralWeekends` | boolean | `true` | `true` renders Sat/Sun headers in the same grey as weekdays. Calendar colours already carry meaning; tinting weekends adds two more that compete. |
 | `passedOpacity` | number | `0.4` | Opacity of events that have already ended, 0–1. They recede rather than disappear, so the shape of the day still reads. |
 

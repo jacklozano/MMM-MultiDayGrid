@@ -1,0 +1,246 @@
+/* MMM-MultiDayGrid
+ *
+ * Owned stylesheet. Nothing here fights another module's selectors, so every
+ * rule is flat and specificity never matters. Sizes are em multiples of the
+ * root font, which derive() computes from the board - there are no absolute
+ * pixel constants to drift.
+ */
+
+.mmdg {
+  --border: 1px solid #232323;
+  --frame: #fff;
+  --muted: #6a6a6a;
+  --label: #7a7a7a;
+  position: relative;
+  box-sizing: border-box;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.mmdg-board {
+  box-sizing: content-box;          /* frame sits OUTSIDE the declared size */
+  border: 1px solid var(--frame);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;                 /* nothing escapes the frame, ever */
+}
+
+/* ---- header ------------------------------------------------------------- */
+.mmdg-header,
+.mmdg-chipbar { display: grid; grid-template-columns: var(--index-width) 1fr; }
+
+.mmdg-days { display: grid; grid-template-columns: repeat(var(--days), 1fr); }
+
+.mmdg-day { text-align: center; padding: 0 0 0.24em; }
+
+/* The tint runs the full height of today's column - header, chip bar, grid -
+   so it reads as one band rather than three tinted fragments. */
+.mmdg-day.is-today { background: rgb(255 255 255 / var(--today-tint)); }
+
+.mmdg-weekday {
+  font-size: 0.5em;
+  letter-spacing: 0.16em;
+  color: var(--label);
+}
+
+.mmdg-daynum { font-weight: 400; line-height: 1.45; color: #fff; }
+
+/* A ring rather than a fill - one less colour on screen. */
+.mmdg-daynum.style-ring {
+  width: 1.45em; height: 1.45em; margin: 0 auto;
+  border: 2px solid #fff; border-radius: 50%; line-height: 1.3;
+}
+.mmdg-daynum.style-fill {
+  width: 1.45em; height: 1.45em; margin: 0 auto;
+  background: #fff; color: #000; border-radius: 50%; line-height: 1.45;
+}
+
+.mmdg-day.is-weekend .mmdg-weekday { color: #8ba3c7; }
+
+/* ---- all-day chips ------------------------------------------------------ */
+.mmdg-chips {
+  display: grid;
+  grid-template-columns: repeat(var(--days), 1fr);
+  grid-template-rows: repeat(var(--chip-rows), auto);
+  gap: 3px;
+  padding-bottom: 4px;
+}
+
+.mmdg-chip {
+  grid-column: var(--col-start) / var(--col-end);
+  grid-row: var(--row);
+  background-color: color-mix(in srgb, var(--cal) var(--tint), #fff);
+  color: var(--ink);
+  font-size: 0.42em;
+  line-height: 1.9;
+  border-radius: 3px;
+  padding: 0 0.5em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Square off the edge that continues past the window and mark it. */
+.mmdg-chip.continues-before { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.mmdg-chip.continues-after  { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.mmdg-chip.continues-before .mmdg-chip-title::before { content: "◀ "; opacity: 0.55; }
+.mmdg-chip.continues-after  .mmdg-chip-title::after  { content: " ▶"; opacity: 0.55; }
+
+.mmdg-chip-today {
+  grid-column: var(--col);
+  grid-row: 1 / -1;
+  background: rgb(255 255 255 / var(--today-tint));
+  margin: -3px 0;            /* cancel the row gap so the band is unbroken */
+  z-index: 0;
+}
+
+.mmdg-chip { position: relative; z-index: 1; }
+
+.mmdg-chip-more {
+  grid-column: 1 / -1;
+  grid-row: var(--row);
+  font-size: 0.38em;
+  color: var(--label);
+  text-align: right;
+  padding-right: 0.4em;
+}
+
+/* ---- body --------------------------------------------------------------- */
+.mmdg-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;                    /* lets the rows divide the space */
+  display: grid;
+  grid-template-columns: var(--index-width) 1fr;
+}
+
+.mmdg-axis {
+  position: relative;
+  border-right: var(--border);
+}
+
+.mmdg-hour {
+  position: absolute;
+  right: 0.35em;
+  top: calc(var(--h) / var(--rows) * 200%);
+  transform: translateY(-0.5em);    /* sit the label on its hour line */
+  font-size: 0.5em;
+  line-height: 1;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.mmdg-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--days), 1fr);
+  /* minmax(0, 1fr), never 1fr: 1fr means minmax(auto, 1fr), whose min-content
+     floor makes the grid taller than its declared height and pushes it off the
+     board. This single value is why the old implementation needed an override. */
+  grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mmdg-col {
+  grid-column: var(--col);
+  grid-row: 1 / -1;
+  position: relative;
+  border-right: var(--border);
+}
+.mmdg-col:last-child { border-right: 0; }
+.mmdg-col.is-today { background: rgb(255 255 255 / var(--today-tint)); }
+
+/* ---- event tiles -------------------------------------------------------- */
+.mmdg-tile {
+  position: absolute;
+  top: var(--top);
+  height: var(--height);
+  left: var(--left);
+  width: var(--width);
+  box-sizing: border-box;
+  /* Pastel fill + one fixed dark ink. Compositing the raw colour over black
+     instead lands too dark for saturated palettes and forces per-calendar
+     auto-contrast; mixing toward white keeps every block light. */
+  background-color: color-mix(in srgb, var(--cal) var(--tint), #fff);
+  color: var(--ink);
+  font-size: 0.46em;
+  font-weight: 500;
+  border-radius: 4px;
+  padding: 0.2em 0.45em;
+  overflow: hidden;
+}
+
+.mmdg-tile.is-passed { opacity: var(--passed-opacity); }
+
+.mmdg-tile.continues-before { border-top-left-radius: 0; border-top-right-radius: 0; }
+.mmdg-tile.continues-after  { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.mmdg-tile.continues-before::before,
+.mmdg-tile.continues-after::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 2px;
+  background: repeating-linear-gradient(90deg, currentColor 0 3px, transparent 3px 6px);
+  opacity: 0.35;
+}
+.mmdg-tile.continues-before::before { top: 0; }
+.mmdg-tile.continues-after::after   { bottom: 0; }
+
+.mmdg-title {
+  font-size: 1.15em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mmdg-time { font-size: 0.85em; opacity: 0.75; }
+
+/* ---- now indicator ------------------------------------------------------ */
+/* Lives inside .mmdg-col (which is position:relative), so it cannot bleed
+   across neighbouring columns. */
+.mmdg-now {
+  position: absolute;
+  top: var(--top);
+  left: 0; right: 0;
+  height: 0;
+  border-top: 1px solid rgb(234 67 53 / 85%);
+  pointer-events: none;
+  z-index: 5;
+}
+/* A dot on the line, not a chip over the axis: a chip collides with the hour
+   label whenever "now" is near the hour. */
+.mmdg-now::after {
+  content: "";
+  position: absolute;
+  left: -4px; top: -4px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #ea4335;
+}
+
+/* ---- corner note + loading ---------------------------------------------- */
+.mmdg-note {
+  position: absolute;
+  right: 0.5em; bottom: 0.25em;
+  font-size: 0.34em;
+  color: var(--label);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.mmdg-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.5em;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.mmdg-error {
+  padding: 1em;
+  font-size: 0.5em;
+  color: #ff6b6b;
+  line-height: 1.6;
+}

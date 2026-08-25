@@ -1,0 +1,174 @@
+/* Synthetic fixture - generated, no real calendar data.
+   Served as JS rather than JSON so the harness works over file:// where
+   fetch() is blocked by CORS. dev/fixture.json holds the same data for
+   tooling that wants it as data. */
+window.FIXTURE = [
+  {
+    "calendar": "Kid A",
+    "color": "#CC4AB8",
+    "title": "Kid A 2nd Grade",
+    "allDay": false,
+    "start": 1787580000000,
+    "end": 1787601600000
+  },
+  {
+    "calendar": "Kid B",
+    "color": "#6D77B2",
+    "title": "Kid B 7th Grade",
+    "allDay": false,
+    "start": 1787581800000,
+    "end": 1787605200000
+  },
+  {
+    "calendar": "Work",
+    "color": "#1E4620",
+    "title": "Busy",
+    "allDay": false,
+    "start": 1787583600000,
+    "end": 1787587200000
+  },
+  {
+    "calendar": "Work",
+    "color": "#1E4620",
+    "title": "Busy",
+    "allDay": false,
+    "start": 1787590800000,
+    "end": 1787594400000
+  },
+  {
+    "calendar": "Home",
+    "color": "#F09300",
+    "title": "Gym",
+    "allDay": false,
+    "start": 1787581800000,
+    "end": 1787585400000
+  },
+  {
+    "calendar": "Home",
+    "color": "#F09300",
+    "title": "Make reservation for #238 at the library",
+    "allDay": false,
+    "start": 1787616000000,
+    "end": 1787619600000
+  },
+  {
+    "calendar": "Kid A",
+    "color": "#CC4AB8",
+    "title": "Kid A 2nd Grade",
+    "allDay": false,
+    "start": 1787670000000,
+    "end": 1787680800000
+  },
+  {
+    "calendar": "Kid B",
+    "color": "#6D77B2",
+    "title": "Kid B 7th Grade",
+    "allDay": false,
+    "start": 1787670300000,
+    "end": 1787681100000
+  },
+  {
+    "calendar": "Work",
+    "color": "#1E4620",
+    "title": "Busy",
+    "allDay": false,
+    "start": 1787670600000,
+    "end": 1787681400000
+  },
+  {
+    "calendar": "Self",
+    "color": "#00A63F",
+    "title": "Therapy with a long name",
+    "allDay": false,
+    "start": 1787670900000,
+    "end": 1787681700000
+  },
+  {
+    "calendar": "Partner",
+    "color": "#D50000",
+    "title": "Group sessions",
+    "allDay": false,
+    "start": 1787671200000,
+    "end": 1787682000000
+  },
+  {
+    "calendar": "Home",
+    "color": "#F09300",
+    "title": "Soccer Practice",
+    "allDay": false,
+    "start": 1787701500000,
+    "end": 1787706000000
+  },
+  {
+    "calendar": "Work",
+    "color": "#1E4620",
+    "title": "Busy",
+    "allDay": false,
+    "start": 1787760000000,
+    "end": 1787763600000
+  },
+  {
+    "calendar": "Self",
+    "color": "#00A63F",
+    "title": "Dentist",
+    "allDay": false,
+    "start": 1787785200000,
+    "end": 1787788800000
+  },
+  {
+    "calendar": "Home",
+    "color": "#F09300",
+    "title": "Overnight drive",
+    "allDay": false,
+    "start": 1787709600000,
+    "end": 1787756400000
+  },
+  {
+    "calendar": "Home",
+    "color": "#F09300",
+    "title": "Multi-day trip",
+    "allDay": true,
+    "startDate": "2026-08-25",
+    "endDate": "2026-08-27"
+  },
+  {
+    "calendar": "Home",
+    "color": "#F09300",
+    "title": "Pay the water bill",
+    "allDay": true,
+    "startDate": "2026-08-25",
+    "endDate": "2026-08-26"
+  },
+  {
+    "calendar": "Self",
+    "color": "#00A63F",
+    "title": "Anniversary",
+    "allDay": true,
+    "startDate": "2026-08-25",
+    "endDate": "2026-08-26"
+  },
+  {
+    "calendar": "Kid A",
+    "color": "#CC4AB8",
+    "title": "Order the thing",
+    "allDay": true,
+    "startDate": "2026-08-25",
+    "endDate": "2026-08-26"
+  },
+  {
+    "calendar": "Work",
+    "color": "#1E4620",
+    "title": "Out of office",
+    "allDay": true,
+    "startDate": "2026-08-25",
+    "endDate": "2026-08-26"
+  },
+  {
+    "calendar": "Partner",
+    "color": "#D50000",
+    "title": "Started before the window",
+    "allDay": true,
+    "startDate": "2026-08-22",
+    "endDate": "2026-08-25"
+  }
+];
