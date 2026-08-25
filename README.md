@@ -40,6 +40,8 @@ Requires Node `>=22.21.1 <23 || >=24` (same as MagicMirror 2.37). Dependencies: 
   module: "MMM-MultiDayGrid",
   position: "bottom_left",
   config: {
+    width:  "800px",     // see the warning below - do NOT leave this as a percentage
+    height: "600px",
     calendars: [
       { name: "Home", url: "https://example.com/basic.ics", color: "#00A63F" }
     ]
@@ -47,7 +49,18 @@ Requires Node `>=22.21.1 <23 || >=24` (same as MagicMirror 2.37). Dependencies: 
 }
 ```
 
-Everything else has a default. `width` and `height` are the only geometry you normally set.
+Everything else has a default.
+
+> ### ⚠️ Always set `width` and `height` to absolute lengths
+>
+> MagicMirror's `bottom_left`, `bottom_center` and `bottom_right` regions are `position: absolute`
+> with **no declared width**, so they shrink to fit their content. A child asking for `width: 100%`
+> therefore resolves to **zero**, and the module renders **nothing at all** — the helper connects, the
+> feeds fetch, and the screen stays empty with no error.
+>
+> Use an absolute length (`"800px"`) or a `calc()` (`"calc(100vw - 1364px)"`), never a bare
+> percentage. If the module does have zero size it now says so in the browser console rather than
+> failing silently.
 
 ---
 
@@ -68,7 +81,7 @@ Everything else has a default. `width` and `height` are the only geometry you no
 | `beginHour` | number | `6` | First hour shown, 0–23. |
 | `hourLength` | number | `16` | Hours displayed. `beginHour: 6` + `hourLength: 16` → 06:00–22:00. |
 | `staticTime` | boolean | `true` | `true` = fixed window. `false` = the window follows the current time. |
-| `width` | string \| number | `"100%"` | Any CSS length. A derived value is normal — the reference deployment uses `calc(100vw - 1364px)` to fill the space beside a fixed-width neighbour. |
+| `width` | string \| number | `"100%"` | Any CSS length. **The default only works in a region that has a width of its own** — in a `bottom_*` region a percentage collapses to zero and nothing renders (see the warning above). Use an absolute length or a `calc()`. A derived value is normal: the reference deployment uses `calc(100vw - 1364px)` to fill the space beside a fixed-width neighbour. |
 | `height` | string \| number | `"800px"` | Any CSS length. Drives row height, and therefore font size. |
 
 ### Appearance
@@ -283,7 +296,8 @@ These look like module bugs and are not:
 
 | Symptom | Check |
 |---|---|
-| Empty grid, no error | Is it still cold-starting? A feed can take up to `fetchTimeout`. |
+| **Nothing renders at all** — no grid, no chrome, no error | The module has zero size. Almost always a percentage `width` in a `bottom_*` region; set an absolute length or a `calc()`. Check the browser console — the module logs its measured size and the likely cause. |
+| Empty grid but chrome is drawn | Still cold-starting. A feed can take up to `fetchTimeout`. |
 | One calendar missing | Look at the corner note — a skipped config entry or a stale feed is named there. Then check the URL is an iCal address, not a `cid=` link. |
 | All-day events off by one day | Should be impossible: all-day events cross the wire as calendar dates, never timestamps. If it happens, file an issue with the offending `VEVENT`. |
 | Tiles too narrow, titles clipped | Too many concurrent events for the column width. Widen `width`, lower `days`, or accept the ellipsis — see the concurrency guarantee above. |

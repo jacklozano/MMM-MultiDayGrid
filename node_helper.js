@@ -24,22 +24,40 @@ module.exports = NodeHelper.create({
     this.timers = new Map();
     this.feeds = new Map();          // name -> { ok, fetchedAt, error, events }
     this.lastHash = null;
-    this.started = false;
+    this.instanceId = null;
   },
 
   socketNotificationReceived (notification, payload) {
     if (notification !== "MMDG_CONFIG") return;
 
-    // Single instance, enforced. A second instance would silently interleave
-    // state with the first; the front-end renders the fatal panel for this.
-    if (this.started) {
+    const id = payload && payload.identifier;
+    const config = (payload && payload.config) || payload;
+
+    // node_helper is server-side and OUTLIVES the browser page. Every reload -
+    // a kiosk restart, MMM-auto-refresh's 15-minute cycle - re-runs the
+    // front-end's start() and re-sends the config. Counting messages would
+    // therefore flag a "second instance" on the first reload, forever.
+    // Identity is what distinguishes them: MagicMirror derives `identifier`
+    // from the module's position in config, so it is stable across reloads and
+    // genuinely different for a second instance.
+    if (this.instanceId && id && this.instanceId !== id) {
       this.sendSocketNotification("MMDG_FATAL", {
         problems: ["a second MMM-MultiDayGrid instance is configured; only one is supported"]
       });
       return;
     }
-    this.started = true;
-    this.configure(payload);
+
+    if (this.instanceId && this.instanceId === id) {
+      // Same instance reconnecting after a page reload. The browser lost its
+      // events; we still have them. Re-publish immediately rather than leaving
+      // a skeleton on screen until the next scheduled fetch.
+      this.lastHash = null;
+      this.publish();
+      return;
+    }
+
+    this.instanceId = id || "unknown";
+    this.configure(config);
   },
 
   configure (config) {

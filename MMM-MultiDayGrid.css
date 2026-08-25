@@ -7,6 +7,13 @@
  */
 
 .mmdg {
+  /* Fill whatever the module shell is sized to. Without this the root is
+     auto-height, so `.mmdg-board { height: 100% }` resolves against nothing and
+     the whole board collapses to the height of its chip bar - which then makes
+     derive() report `undersize` and shed day columns. An inline width/height
+     from buildGrid() overrides these when the grid is used standalone. */
+  width: 100%;
+  height: 100%;
   --border: 1px solid #232323;
   --frame: #fff;
   --muted: #6a6a6a;

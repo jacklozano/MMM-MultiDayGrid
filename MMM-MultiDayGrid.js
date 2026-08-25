@@ -75,7 +75,11 @@ Module.register("MMM-MultiDayGrid", {
     this.problems = [];
     this.fatal = null;
     this.painted = false;
-    this.sendSocketNotification("MMDG_CONFIG", this.config);
+    // The identifier matters: node_helper outlives the page. Every reload
+    // re-runs start() and re-sends this, and without an identity the helper
+    // cannot tell a reconnect from a genuine second instance.
+    this.sendSocketNotification("MMDG_CONFIG",
+      { identifier: this.identifier, config: this.config });
     this.timer = setInterval(() => this.paint(), this.config.repaintInterval);
   },
 
@@ -128,7 +132,22 @@ Module.register("MMM-MultiDayGrid", {
     if (!this.shell || !this.shell.isConnected) return;
 
     const rect = this.shell.getBoundingClientRect();
-    if (!(rect.width > 0 && rect.height > 0)) return;   // not laid out yet
+    if (!(rect.width > 0 && rect.height > 0)) {
+      // Returning silently here is how a misconfiguration becomes invisible.
+      // The usual cause is a percentage width inside a shrink-to-fit region:
+      // MagicMirror's bottom_* regions are position:absolute with no declared
+      // width, so `width: "100%"` resolves to 0 and nothing ever renders -
+      // with no error anywhere. Say so, once.
+      if (!this._warnedNoSize) {
+        this._warnedNoSize = true;
+        Log.error(`MMM-MultiDayGrid: the module has no size (${rect.width}x${rect.height}). `
+          + `config.width="${this.config.width}" config.height="${this.config.height}". `
+          + `A percentage width in a bottom_* region collapses to zero - set an absolute `
+          + `length or a calc(), e.g. "calc(100vw - 1364px)".`);
+      }
+      return;
+    }
+    this._warnedNoSize = false;
 
     if (this.fatal) return this.renderFatal();
 
